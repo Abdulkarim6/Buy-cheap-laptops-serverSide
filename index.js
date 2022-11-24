@@ -14,12 +14,23 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.6ertblk.mongodb.net/?retryWrites=true&w=majority`;
 // console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-client.connect(err => {
-    const collection = client.db("test").collection("devices");
-    // perform actions on the collection object
-    client.close();
-});
 
+async function run() {
+    try {
+        const categoriesCollection = client.db('cheapLaptops').collection('categories');
+
+        app.get('/categories', async (req, res) => {
+            const query = {}
+            const result = await categoriesCollection.find(query).toArray()
+            res.send(result)
+        })
+
+    }
+    finally {
+
+    }
+}
+run().catch(err => console.error(err))
 
 app.get('/', async (req, res) => {
     res.send('Laptops server is running')
