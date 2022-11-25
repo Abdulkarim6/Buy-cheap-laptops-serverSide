@@ -20,6 +20,8 @@ async function run() {
         const categoriesCollection = client.db('cheapLaptops').collection('categories');
         const sellerProductsCollection = client.db('cheapLaptops').collection('sellerProducts');
         const usersCollection = client.db('cheapLaptops').collection('users');
+        const buyerBookingProductsCollection = client.db('cheapLaptops').collection('buyerBookingProducts');
+
 
         /* get categories data and send client side */
         app.get('/categories', async (req, res) => {
@@ -28,7 +30,7 @@ async function run() {
             res.send(result)
         });
 
-        /* get products data from server side */
+        /* get products (id : lenovo, asus, samsung) data from server side */
         app.get('/products/:id', async (req, res) => {
             const id = req.params.id;
             const query = { id: id };
@@ -37,12 +39,30 @@ async function run() {
             res.send(booking)
         });
 
-         /* send created user to database */
-         app.post('/users', async (req, res) => {
+        /* send created user to database */
+        app.post('/users', async (req, res) => {
             const user = req.body;
             const result = await usersCollection.insertOne(user);
             res.send(result)
         });
+
+        /* post client appointment booking to database */
+        app.post('/buyerBookingProducts', async (req, res) => {
+            const buyerBookingProduct = req.body;
+            const result = await buyerBookingProductsCollection.insertOne(buyerBookingProduct)
+            res.send(result)
+
+        });
+
+        /* get client bookings and show client side */
+        app.get('/products', async (req, res) => {
+            const email = req.query.email;
+            console.log('pro',email);
+            // const query = { email: email };
+            // const bookings = await bookingsCollection.find(query).toArray();
+            // res.send(bookings)
+        });
+
 
 
 
