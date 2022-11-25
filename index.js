@@ -19,14 +19,14 @@ async function run() {
     try {
         const categoriesCollection = client.db('cheapLaptops').collection('categories');
         const sellerProductsCollection = client.db('cheapLaptops').collection('sellerProducts');
+        const usersCollection = client.db('cheapLaptops').collection('users');
 
-
-        //get categories data and send client side
+        /* get categories data and send client side */
         app.get('/categories', async (req, res) => {
             const query = {}
             const result = await categoriesCollection.find(query).toArray()
             res.send(result)
-        })
+        });
 
         /* get products data from server side */
         app.get('/products/:id', async (req, res) => {
@@ -35,7 +35,14 @@ async function run() {
             // const query = {}
             const booking = await sellerProductsCollection.find(query).toArray();
             res.send(booking)
-        })
+        });
+
+         /* send created user to database */
+         app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            res.send(result)
+        });
 
 
 
