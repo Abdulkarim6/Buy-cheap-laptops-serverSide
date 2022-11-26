@@ -69,13 +69,21 @@ async function run() {
             res.send(result)
         });
 
-        /* added Doctor to databese from client side */
+        /* added Product to databese from client side */
         app.post('/addedProduct', async (req, res) => {
             const addedProduct = req.body;
             console.log(addedProduct);
             const result = await sellerProductsCollection.insertOne(addedProduct);
             res.send(result)
         });
+
+        /* deleted Product operation from client side */
+        app.delete('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await sellerProductsCollection.deleteOne(query)
+            res.send(result)
+        })
 
 
     }
