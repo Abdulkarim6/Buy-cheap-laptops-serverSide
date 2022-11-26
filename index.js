@@ -57,13 +57,25 @@ async function run() {
         /* get client bookings and show client side */
         app.get('/products', async (req, res) => {
             const email = req.query.email;
-            console.log('pro',email);
-            // const query = { email: email };
-            // const bookings = await bookingsCollection.find(query).toArray();
-            // res.send(bookings)
+            const query = { email: email };
+            const bookings = await sellerProductsCollection.find(query).toArray();
+            res.send(bookings)
         });
 
+        /* get only product category name */
+        app.get('/productCategorys', async (req, res) => {
+            const query = {}
+            const result = await categoriesCollection.find(query).project({ id: 1 }).toArray()
+            res.send(result)
+        });
 
+        /* added Doctor to databese from client side */
+        app.post('/addedProduct', async (req, res) => {
+            const addedProduct = req.body;
+            console.log(addedProduct);
+            const result = await sellerProductsCollection.insertOne(addedProduct);
+            res.send(result)
+        });
 
 
     }
