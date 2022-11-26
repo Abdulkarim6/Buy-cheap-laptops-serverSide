@@ -50,6 +50,7 @@ async function run() {
         /* Load Buyer booking product from client side and send database[bookingModal] */
         app.post('/buyerBookingProducts', async (req, res) => {
             const buyerBookingProduct = req.body;
+            // console.log(buyerBookingProduct);
             const result = await buyerBookingProductsCollection.insertOne(buyerBookingProduct)
             res.send(result)
 
@@ -100,6 +101,22 @@ async function run() {
             const advertiseProducts = await advertisedProductsCollection.find(query).toArray();
             res.send(advertiseProducts)
         });
+
+        /* get every buyer products collection from database and send client side[MyOrders] */
+        app.get('/myOrderProducts', async (req, res) => {
+            const email = req.query.email;
+            const query = { buyerEmail: email };
+            const myOrderProducts = await buyerBookingProductsCollection.find(query).toArray();
+            res.send(myOrderProducts)
+        });
+
+        /* get All Sellers from database and send client side for Admin [allsellers] */
+        // app.get('/allSellers', async (req, res) => {
+        //     const query = {};
+        //     const allSelers = await usersCollection.find(query).toArray();
+        //     console.log(allSelers);
+        //     res.send(allSelers)
+        // });
 
 
     }
