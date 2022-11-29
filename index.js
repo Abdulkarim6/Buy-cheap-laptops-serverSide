@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000;
 
 const app = express();
@@ -14,6 +15,24 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.6ertblk.mongodb.net/?retryWrites=true&w=majority`;
 // console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+
+function veryfyJwt(req, res, next) {
+    const authHeader = req.headers.authorization;
+    // console.log('22', authHeader);
+    if (!authHeader) {
+        return res.send(401).send('unauthorized access')
+    }
+    const token = authHeader.split(' ')[1];
+
+    jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidde access' })
+        }
+        req.decoded = decoded;
+        next()
+    })
+}
+
 
 async function run() {
     try {
@@ -57,8 +76,15 @@ async function run() {
         });
 
         /* get every seller products collection from database and send client side[MyProducts] */
-        app.get('/products', async (req, res) => {
+        app.get('/products', veryfyJwt, async (req, res) => {
             const email = req.query.email;
+            //
+            const decodedEmail = req.decoded.email;
+
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'Forbidden access' })
+            }
+
             const query = { email: email };
             const bookings = await sellerProductsCollection.find(query).toArray();
             res.send(bookings)
@@ -117,6 +143,54 @@ async function run() {
         //     console.log(allSelers);
         //     res.send(allSelers)
         // });
+
+        /* if a user signIn or signUp by email, Then he will get a token and use this token client side */
+        app.get('/jwt', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            if (user) {
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '5h' })
+                return res.send({ accessToken: token });
+            }
+            res.status(403).send({ accessToken: '' })
+        });
+
+
+        /* get All sellers [AllSellers] */
+        app.get('/allSellers', async (req, res) => {
+            const role = req.query.role;
+            console.log(role);
+            const query = { role: role };
+            const allSellers = await usersCollection.find(query).toArray();
+            res.send(allSellers)
+        });
+
+        /* get All buyers [AllBuyers] */
+        app.get('/allBuyers', async (req, res) => {
+            const role = req.query.role;
+            const query = { role: role };
+            const allBuyers = await usersCollection.find(query).toArray();
+            res.send(allBuyers)
+        });
+
+        /* buyer deleted operation from client side */
+        app.delete('/buyer/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await usersCollection.deleteOne(query)
+            res.send(result)
+        })
+
+        /* seller deleted operation from client side */
+        app.delete('/seller/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await usersCollection.deleteOne(query)
+            res.send(result)
+        })
+
+
 
 
     }
