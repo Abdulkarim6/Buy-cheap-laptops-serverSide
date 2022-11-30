@@ -41,6 +41,7 @@ async function run() {
         const usersCollection = client.db('cheapLaptops').collection('users');
         const buyerBookingProductsCollection = client.db('cheapLaptops').collection('buyerBookingProducts');
         const advertisedProductsCollection = client.db('cheapLaptops').collection('advertisedProducts');
+        const usersMessageCollection = client.db('cheapLaptops').collection('Messages');
 
 
         /* get categories data and send client side */
@@ -100,7 +101,6 @@ async function run() {
         /* added Product to databese from client side */
         app.post('/addedProduct', async (req, res) => {
             const addedProduct = req.body;
-            console.log(addedProduct);
             const result = await sellerProductsCollection.insertOne(addedProduct);
             res.send(result)
         });
@@ -133,16 +133,11 @@ async function run() {
             const email = req.query.email;
             const query = { buyerEmail: email };
             const myOrderProducts = await buyerBookingProductsCollection.find(query).toArray();
+            console.log(myOrderProducts);
             res.send(myOrderProducts)
         });
 
-        /* get All Sellers from database and send client side for Admin [allsellers] */
-        // app.get('/allSellers', async (req, res) => {
-        //     const query = {};
-        //     const allSelers = await usersCollection.find(query).toArray();
-        //     console.log(allSelers);
-        //     res.send(allSelers)
-        // });
+
 
         /* if a user signIn or signUp by email, Then he will get a token and use this token client side */
         app.get('/jwt', async (req, res) => {
@@ -160,7 +155,6 @@ async function run() {
         /* get All sellers [AllSellers] */
         app.get('/allSellers', async (req, res) => {
             const role = req.query.role;
-            console.log(role);
             const query = { role: role };
             const allSellers = await usersCollection.find(query).toArray();
             res.send(allSellers)
@@ -180,7 +174,7 @@ async function run() {
             const query = { _id: ObjectId(id) }
             const result = await usersCollection.deleteOne(query)
             res.send(result)
-        })
+        });
 
         /* seller deleted operation from client side */
         app.delete('/seller/:id', async (req, res) => {
@@ -188,9 +182,38 @@ async function run() {
             const query = { _id: ObjectId(id) }
             const result = await usersCollection.deleteOne(query)
             res.send(result)
-        })
+        });
 
+        /* check user admin? */
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await usersCollection.findOne(query);
+            res.send({ isAdmin: user?.role === 'Admin' });
+        });
 
+        /* check user seller? */
+        app.get('/users/seller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await usersCollection.findOne(query);
+            res.send({ isSeller: user?.role === 'Seller' });
+        });
+
+        /* added Message to databese from client side */
+        app.post('/message', async (req, res) => {
+            const message = req.body;
+            const result = await usersMessageCollection.insertOne(message);
+            res.send(result)
+        });
+
+        /* get Messages data from database side */
+        app.get('/messages', async (req, res) => {
+            const query = {}
+            const messages = await usersMessageCollection.find(query).limit(3).toArray();
+            res.send(messages)
+        });
+        
 
 
     }
