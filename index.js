@@ -213,8 +213,27 @@ async function run() {
             const messages = await usersMessageCollection.find(query).limit(3).toArray();
             res.send(messages)
         });
-        
 
+        /* user update make verify a user  */
+        app.put('/seller/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    status: 'verify'
+                },
+            };
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        });
+
+        /* check user Verifyed? */
+        app.get('/seller/Verify', async (req, res) => {
+            const query = {}
+            const user = await usersCollection.find(query).toArray();
+            res.send({ isVerify: user?.status === 'verify' });
+        });
 
     }
     finally {
