@@ -20,7 +20,6 @@ function veryfyJwt(req, res, next) {
     const authHeader = req.headers.authorization;
     // console.log(req);
     // console.log(req.headers);
-    console.log('22', authHeader);
     if (!authHeader) {
         return res.send(401).send('unauthorized access')
     }
@@ -69,7 +68,7 @@ async function run() {
             res.send(result)
         });
 
-        /* Load Buyer booking product[Our Products] from client side and send database[bookingModal] */
+        /* Load Buyer booking product[Our Products, advertised products] from client side and send database[bookingModal] */
         app.post('/buyerBookingProducts', async (req, res) => {
             const buyerBookingProduct = req.body;
             // console.log(buyerBookingProduct);
@@ -78,10 +77,16 @@ async function run() {
 
         });
 
+        /* get all products collection from database [sellerProducts] and send client side[AllProducts] */
+        app.get('/allproducts', async (req, res) => {
+            const query = { };
+            const allProducts = await sellerProductsCollection.find(query).toArray();
+            res.send(allProducts)
+        });
+
         /* get every seller products collection from database and send client side[MyProducts] */
         app.get('/products', veryfyJwt, async (req, res) => {
             const email = req.query.email;
-            console.log(email);
             //
             const decodedEmail = req.decoded.email;
 
@@ -117,35 +122,36 @@ async function run() {
         });
 
         /* Advertised Product load from client side and send database */
-        app.post('/advertiseProduct', async (req, res) => {
+        app.put('/advertiseProduct', async (req, res) => {
             const product = req.body;
             // console.log(product);
             const result = await advertisedProductsCollection.insertOne(product);
-            res.send(result)
+
+            const id = req.body._id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    status: 'advertised'
+                },
+            };
+            const advertisedResult = await sellerProductsCollection.updateOne(filter, updateDoc, options);
+            res.send([result, advertisedResult])
         });
 
         /* get Advertised products from database and send client side */
         app.get('/advertiseProducts', async (req, res) => {
             const query = {};
             const advertiseProducts = await advertisedProductsCollection.find(query).toArray();
-           res.send(advertiseProducts)
+            res.send(advertiseProducts)
         });
 
         app.get('/advertiseProductDetails/:id', async (req, res) => {
             const id = req.params.id;
-            const query = { _id: new ObjectId(id) }
-            const result = await advertisedProductsCollection.findOne();
-            console.log(result,141);
+            // advertiseProduct _id default sending
+            const query = { _id: id }
+            const result = await advertisedProductsCollection.findOne(query);
             res.send(result)
-        });
-
-        /* Load Buyer booking product[advertiseProduct] from client side and send database[bookingModal] */
-        app.post('/advertiseProduct', async (req, res) => {
-            const buyerBookingProduct = req.body;
-            // console.log(buyerBookingProduct);
-            const result = await buyerBookingProductsCollection.insertOne(buyerBookingProduct)
-            res.send(result)
-
         });
 
         /* get every buyer products collection from database and send client side[MyOrders] */
@@ -153,7 +159,6 @@ async function run() {
             const email = req.query.email;
             const query = { buyerEmail: email };
             const myOrderProducts = await buyerBookingProductsCollection.find(query).toArray();
-            console.log(myOrderProducts);
             res.send(myOrderProducts)
         });
 
@@ -162,11 +167,10 @@ async function run() {
         /* if a user signIn or signUp by email, Then he will get a token and use this token client side */
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
-            console.log('146l', req, email);
             const query = { email: email };
             const user = await usersCollection.findOne(query);
             if (user) {
-                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '5h' })
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN)
                 return res.send({ accessToken: token });
             }
             res.status(403).send({ accessToken: '' })
