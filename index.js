@@ -146,7 +146,7 @@ async function run() {
             res.send(advertiseProducts)
         });
 
-        app.get('/advertiseProductDetails/:id', async (req, res) => {
+        app.get('/ProductDetails/:id', async (req, res) => {
             const id = req.params.id;
             // advertiseProduct _id default sending
             const query = { _id: id }
